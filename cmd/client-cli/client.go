@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
+	core "github.com/FRahimov84/IBank-core"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
-//	"IBank_core"
 )
 func main() {
 	db, err := sql.Open("sqlite3", "db.sqlite")
@@ -13,11 +13,17 @@ func main() {
 	}
 	defer func() {
 		err := db.Close()
-		log.Fatalf("can't close data base %v",err)
+		if err != nil {
+			log.Fatalf("can't close data base %v",err)
+		}
 	}()
 	err = db.Ping()
 	if err != nil {
 		log.Fatalf("can't ping data base %v",err)
+	}
+	err = core.Init(db)
+	if err != nil {
+		log.Fatalf("can't init database %v", err)
 	}
 
 }
