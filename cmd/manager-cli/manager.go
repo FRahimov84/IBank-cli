@@ -56,10 +56,10 @@ func loop(db *sql.DB) {
 			handleAddATM(db)
 		case "5":
 			fmt.Println("Export")
-			handleExport(db)
+		//	handleExport(db)
 		case "6":
 			fmt.Println("Import")
-			handleImport(db)
+			//handleImport(db)
 		case "q":
 			return
 		default:
@@ -188,83 +188,32 @@ func handleAddATM(db *sql.DB)  {
 	}
 }
 
-func handleExport(db *sql.DB) {
-	for ; ; {
-		var cmd string
-		fmt.Println(exportCommands)
-		_, err := fmt.Scan(&cmd)
-		if err != nil {
-			fmt.Errorf("can't scan command %w", err)
-		}
-		switch cmd {
-		case "1":
-			fmt.Println("Exporting users...")
-			list, err := core.UsersList(db)
-			if err != nil {
-				fmt.Errorf("can't get users list %w", err)
-			}
-			handleExportUsers(list)
-		case "2":
-			fmt.Println("Exporting bills...")
-			handleExportBills(db)
-		case "3":
-			fmt.Println("Exporting ATMs...")
-			handleExportATMs(db)
-		case "q":
-			return
-		default:
-			fmt.Printf("Неправильная команда %s\n", cmd)
-		}
-	}
-}
-
-func handleExportUsers(users []core.UserList) {
-	for ; ; {
-		var cmd string
-		fmt.Println(jsonXmlCommands)
-		_, err := fmt.Scan(&cmd)
-		if err != nil {
-			fmt.Errorf("can't scan command %w", err)
-		}
-		switch cmd {
-		case "1":
-
-		case "2":
-
-		case "q":
-			return
-		default:
-			fmt.Printf("Неправильная команда %s\n", cmd)
-		}
-	}
-}
-
-func handleExportUsersToJson(){
-
-}
-
-func handleExportXml(db *sql.DB)  {
-
-}
-
-func handleImport(db *sql.DB){
-	for ; ; {
-		var cmd string
-		fmt.Println(jsonXML)
-		_, err := fmt.Scan(&cmd)
-		if err != nil {
-			fmt.Errorf("can't scan commad %w", err)
-		}
-		switch cmd {
-		case "1":
-			fmt.Println("Exporting to JSON format...")
-			handleExportJson(db)
-		case "2":
-			handleExportXml(db)
-		case "q":
-			return
-		default:
-			fmt.Printf("Неправильная команда %s\n", cmd)
-		}
-	}
-}
+//func handleExport(db *sql.DB) {
+//	for ; ; {
+//		var cmd string
+//		fmt.Println(exportCommands)
+//		_, err := fmt.Scan(&cmd)
+//		if err != nil {
+//			fmt.Errorf("can't scan command %w", err)
+//		}
+//		switch cmd {
+//		case "1":
+//			fmt.Println("Exporting users...")
+//			list, err := core.UsersList(db)
+//			if err != nil {
+//				fmt.Errorf("can't get users list %w", err)
+//			}
+//			handleExportUsers(list)
+//		case "2":
+//			fmt.Println("Exporting bills...")
+//			handleExportBills(db)
+//		case "3":
+//			fmt.Println("Exporting ATMs...")
+//			handleExportATMs(db)
+//		case "q":
+//			return
+//		default:
+//			fmt.Printf("Неправильная команда %s\n", cmd)
+//		}
+//	}
+//}
