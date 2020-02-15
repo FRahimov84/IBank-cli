@@ -26,6 +26,7 @@ func main() {
 			fmt.Printf("can't close file %e", err)
 		}
 	}()
+
 	log.SetOutput(file)
 	log.Print("start application")
 	log.Print("open db")
@@ -79,7 +80,16 @@ func loop(db *sql.DB) {
 			handleExport(db)
 		case "6":
 			fmt.Println("Import - Импортировать")
-			handleImport()
+			handleImport(db)
+		case "7":
+			fmt.Println("блокировка/разблокировака..")
+			handleLock(db)
+		case "8":
+			fmt.Println("поиск пользователя...")
+			handleSearch(db)
+		case "9":
+			fmt.Println("список пользователей...")
+			handleListUser(db)
 		case "q":
 			return
 		default:
@@ -88,6 +98,106 @@ func loop(db *sql.DB) {
 	}
 
 }
+
+func handleListUser(db *sql.DB) {
+	list, err := core.UsersList(db)
+	if err != nil {
+		fmt.Println("Не удалось получить список пользователей")
+		log.Printf("can't get users list %e",err)
+		return
+	}
+	for _, userList := range list {
+		fmt.Println(userList)
+	}
+}
+
+func handleSearch(db *sql.DB)  {
+	var cmd string
+	fmt.Println("Выберите критерию поиска?\n1 - по имени \n2 - по номеру\nq - Назад")
+	_, err := fmt.Scan(&cmd)
+	if err != nil {
+		fmt.Println("Что-то пошло не так")
+		log.Printf("can't scan cmd in handleSearch() err: %e",err)
+		return
+	}
+	if cmd == "1"{
+		var name string
+		fmt.Print("Имя: ")
+		_, err := fmt.Scan(&name)
+		if err != nil {
+			fmt.Println("Что-то пошло не так")
+			log.Printf("can't scan name in handleSearch() err: %e",err)
+			return
+		}
+		err, list := core.FinaByName(db, name)
+		if err != nil {
+			fmt.Println("Не удалось найти пользователя")
+			log.Printf("can't find user %e",err)
+			return
+		}
+		fmt.Println(list)
+	}
+	if cmd == "2"{
+		var phone string
+		fmt.Print("Телефон: ")
+		_, err := fmt.Scan(&phone)
+		if err != nil {
+			fmt.Println("Что-то пошло не так")
+			log.Printf("can't scan name in handleSearch() err: %e",err)
+			return
+		}
+		err, list := core.FinaByPhone(db, phone)
+		if err != nil {
+			fmt.Println("Не удалось найти пользователя")
+			log.Printf("can't find user %e",err)
+			return
+		}
+		fmt.Println(list)
+	}
+	if cmd == "q" {
+		return
+	}
+}
+
+func handleLock(db *sql.DB)  {
+	var user_id int
+	var cmd int
+	fmt.Println("Введите id пользователя")
+	_, err := fmt.Scan(&user_id)
+	if err != nil {
+		fmt.Println("Что-то пошло не так")
+		log.Printf("can't scan user_id in handleLock() err: %e",err)
+		return
+	}
+	err, status := core.LockStatus(db, user_id)
+	if err != nil {
+		fmt.Println("Не удается найти такого пользователя")
+		log.Printf("some error: %e", err)
+	}
+	fmt.Printf("Статус пользователя %v %v\n",user_id, status)
+	fmt.Println("Что сделать с пользователем пользователем?\n1 - заблокировать\n2 - разблокировать")
+	_, err = fmt.Scan(&cmd)
+	if err != nil {
+		fmt.Println("Что-то пошло не так")
+		log.Printf("can't scan cmd in handleLock() err: %e",err)
+		return
+	}
+	if cmd == 1{
+		err = core.LockUser(db, true, user_id)
+		if err != nil {
+			fmt.Println("Не удалось")
+			log.Printf("can't change column lockes in tdble users %e",err)
+		}
+	}
+	if cmd == 2{
+		core.LockUser(db, false,user_id)
+		if err != nil {
+			fmt.Println("Не удалось")
+			log.Printf("can't change column lockes in tdble users %e",err)
+		}
+	}
+}
+
 func handleAddUser(db *sql.DB) {
 	var name string
 	var surname string
@@ -184,6 +294,11 @@ func handleAddService(db *sql.DB) {
 	if err != nil {
 		fmt.Println("что-то пошло не так, попробуйте еще раз!")
 		log.Printf("can't scan field price in handleAddService() error: %e", err)
+		return
+	}
+	if	price<0{
+		fmt.Println("Цена не должна быть меньше 0!")
+		log.Printf("field price is less than zero in handleAddService() error: %e", err)
 		return
 	}
 	err = core.AddService(db, service, price)
@@ -325,7 +440,7 @@ func handleExportToFile(list core.List, index int) {
 	}
 }
 
-func handleImport() {
+func handleImport(db *sql.DB) {
 
 	files, err := ioutil.ReadDir("./results/")
 	if err != nil {
@@ -348,7 +463,7 @@ func handleImport() {
 	fmt.Println(importInfo)
 	var cmd int
 	_, err = fmt.Scan(&cmd)
-	if err != nil && cmd > 0 && cmd <= t {
+	if err != nil && cmd < 1 && cmd > t {
 		fmt.Println("Не правельная команда!")
 		log.Printf("can't read command in handleImport() files: %v, cmd: %v, err: %e", t, cmd, err)
 		return
@@ -370,6 +485,10 @@ func handleImport() {
 		if list.ATMsList != nil {
 			fmt.Printf("%s\t%s\t%s\n", "id", "Адрес", "Статус")
 			for _, atm := range list.ATMsList {
+				err := core.AddATM(db, atm.Address, atm.Locked)
+				if err != nil {
+					log.Printf("can't add ATM %s", atm.Address)
+				}
 				fmt.Printf("%v\t%v\t%v\n", atm.Id, atm.Address, atm.Locked)
 			}
 		}
@@ -397,6 +516,10 @@ func handleImport() {
 		if list.ATMsList != nil {
 			fmt.Printf("Список банкоматов\n%s\t%s\t%s\n", "id", "Адрес", "Статус")
 			for _, atm := range list.ATMsList {
+				err := core.AddATM(db, atm.Address, atm.Locked)
+				if err != nil {
+					log.Printf("can't add ATM %s", atm.Address)
+				}
 				fmt.Printf("%v\t%v\t%v\n", atm.Id, atm.Address, atm.Locked)
 			}
 		}
